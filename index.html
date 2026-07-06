@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GenAI Finance App</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <header class="app-header">
+    <h1>GenAI Finance App</h1>
+    <p class="subtitle">Vienna Executive Academy, template starting point</p>
+  </header>
+
+  <main class="app-main">
+    <section class="panel">
+      <form id="ticker-form">
+        <label for="ticker">Ticker</label>
+        <input id="ticker" name="ticker" type="text" placeholder="e.g. AAPL" required />
+
+        <label for="openrouter-key">OpenRouter API key</label>
+        <input id="openrouter-key" name="openrouter-key" type="password" placeholder="sk-or-..." required />
+
+        <button type="submit">Analyze</button>
+      </form>
+    </section>
+
+    <section class="panel" id="results">
+      <p class="placeholder">Results will appear here once you wire up data fetching and your LLM call.</p>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <p>Replace this scaffold with your own build. See README.md for setup notes.</p>
+  </footer>
+
+  <script type="module" src="/main.js"></script>
+</body>
+</html>
