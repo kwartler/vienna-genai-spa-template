@@ -34,18 +34,14 @@ To stop the server, click back on the terminal and press `Ctrl + C`.
 
 ## API keys
 
-This app calls two services, and needs a key for each before it returns anything:
+This app calls two services, and needs a key for each before it returns anything. **Both keys are entered in the app's form fields at run time. Neither is stored in the code.**
 
-1. **Financial Modeling Prep (price data):** paste your FMP key into `main.js`, on this line near the top:
+1. **Twelve Data (price data):** get a free key at https://twelvedata.com/pricing. The free plan covers all US stocks and ETFs, capped at 8 requests per minute and 800 per day.
+2. **OpenRouter (the AI research note):** get a key at https://openrouter.ai/.
 
-   ```js
-   const FMP_API_KEY = 'YOUR_FMP_KEY_HERE';
-   ```
+Because no key is ever written into a file or committed, this repo is safe to make public and the deployed page is safe to share, including with prospective employers. Each visitor supplies their own keys, which stay in their browser tab only and are cleared on reload.
 
-   Get a free key from your FMP dashboard at https://site.financialmodelingprep.com/.
-2. **OpenRouter (the AI research note):** you enter this in the app's form field when you click Analyze. It is not stored in the code.
-
-Note: `main.js` ships to the browser, so your FMP key is visible to anyone who views your deployed page. Use only a free classroom key here, never a paid or personal one.
+> Note: because this is a static app with no server, a typed key is sent straight from the browser to Twelve Data/OpenRouter over HTTPS while the app runs. That is fine for a classroom or portfolio demo. A production app would add a backend proxy so keys never reach the browser at all.
 
 ## Deploying to GitHub Pages
 

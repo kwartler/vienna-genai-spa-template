@@ -1,10 +1,9 @@
 // Vienna GenAI Finance course, starter scaffold.
 // This file intentionally does very little. Build on it during class.
-
-// Paste your Financial Modeling Prep API key between the quotes below.
-// Get a free key at https://site.financialmodelingprep.com/ (Dashboard).
-// Note: this key is visible in the browser, so only use a free/classroom key here.
-const FMP_API_KEY = 'YOUR_FMP_KEY_HERE';
+//
+// No API keys are stored in this file. Both the Twelve Data key and the
+// OpenRouter key are entered in the form fields at run time, so nothing secret
+// is ever committed to your public repo or shipped in the source.
 
 const form = document.getElementById('ticker-form');
 const results = document.getElementById('results');
@@ -13,12 +12,13 @@ form.addEventListener('submit', async (event) => {
   event.preventDefault();
 
   const ticker = document.getElementById('ticker').value.trim().toUpperCase();
+  const twelveDataKey = document.getElementById('twelvedata-key').value.trim();
   const openRouterKey = document.getElementById('openrouter-key').value.trim();
 
   results.innerHTML = '<p>Loading...</p>';
 
   try {
-    const priceData = await fetchPriceData(ticker);
+    const priceData = await fetchPriceData(ticker, twelveDataKey);
     const note = await getResearchNote(ticker, priceData, openRouterKey);
     renderResults(ticker, priceData, note);
   } catch (err) {
@@ -26,33 +26,64 @@ form.addEventListener('submit', async (event) => {
   }
 });
 
-// Financial Modeling Prep daily price history (last 3 months).
+// Twelve Data daily price history.
 // This endpoint sends CORS headers, so it works directly from the browser.
-// Returns an array of daily bars: { date, open, high, low, close, volume }.
+// The free plan covers all US equities and ETFs (no ticker whitelist).
+// Returns an array of daily bars sorted oldest to newest, each shaped as
+// { date, open, high, low, close, volume } with numeric values.
 // Replace or extend with moving average, MACD, RSI calculations from Day 1.
-async function fetchPriceData(ticker) {
-  const to = new Date();
-  const from = new Date();
-  from.setMonth(from.getMonth() - 3);
-  const fmt = (d) => d.toISOString().slice(0, 10);
-
-  const url = `https://financialmodelingprep.com/stable/historical-price-eod/full?symbol=${ticker}&from=${fmt(from)}&to=${fmt(to)}&apikey=${FMP_API_KEY}`;
+async function fetchPriceData(ticker, apiKey) {
+  // outputsize is the number of most-recent bars. ~63 trading days is about
+  // 3 months; 90 leaves a little headroom. Max allowed is 5000.
+  const url = `https://api.twelvedata.com/time_series?symbol=${ticker}&interval=1day&outputsize=90&apikey=${apiKey}`;
   const response = await fetch(url);
 
-  const raw = await response.json();
-  // FMP reports key/plan problems as { "Error Message": "..." }.
-  if (raw && raw['Error Message']) throw new Error(raw['Error Message']);
+  // Read the body as text first, then parse it safely, so an unexpected
+  // non-JSON response gives a readable error instead of "Unexpected token".
+  const body = await response.text();
+  let raw;
+  try {
+    raw = JSON.parse(body);
+  } catch {
+    throw new Error(body.trim() || 'Price fetch failed');
+  }
+
+  // Twelve Data reports problems as { code, status: "error", message }.
+  if (raw && raw.status === 'error') throw new Error(raw.message || 'Price fetch failed');
   if (!response.ok) throw new Error('Price fetch failed');
 
-  // The stable endpoint returns a bare array; older paths nest it under `historical`.
-  const bars = Array.isArray(raw) ? raw : (raw.historical ?? []);
-  if (!bars.length) throw new Error(`No price data returned for ${ticker}`);
-  return bars;
+  // Successful responses look like { meta, values: [ { datetime, open, ... } ] },
+  // newest first. Normalize to numbers and sort oldest to newest so indicator
+  // math (moving averages, RSI, ...) reads left to right.
+  const values = raw.values ?? [];
+  if (!values.length) throw new Error(`No price data returned for ${ticker}`);
+
+  return values
+    .map((b) => ({
+      date: b.datetime,
+      open: Number(b.open),
+      high: Number(b.high),
+      low: Number(b.low),
+      close: Number(b.close),
+      volume: Number(b.volume)
+    }))
+    .sort((a, b) => (a.date < b.date ? -1 : 1));
 }
 
-// Example: OpenRouter call. Replace the model, prompt, and system prompt
-// with whatever you designed in the Prompt Engineering session.
+// OpenRouter call. The price data above is summarized and handed to the model
+// so the note reflects the actual numbers you fetched. Replace the model,
+// prompt, and system prompt with whatever you designed in the Prompt
+// Engineering session.
 async function getResearchNote(ticker, priceData, apiKey) {
+  const first = priceData[0];
+  const latest = priceData[priceData.length - 1];
+  const pctChange = ((latest.close - first.close) / first.close) * 100;
+
+  const summary =
+    `${ticker} daily closes from ${first.date} to ${latest.date}: ` +
+    `start $${first.close.toFixed(2)}, latest $${latest.close.toFixed(2)}, ` +
+    `change ${pctChange.toFixed(1)}% over ${priceData.length} trading days.`;
+
   const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -63,7 +94,7 @@ async function getResearchNote(ticker, priceData, apiKey) {
       model: 'anthropic/claude-sonnet-4-6',
       messages: [
         { role: 'system', content: 'You are a financial research assistant. Be concise and factual.' },
-        { role: 'user', content: `Give a one paragraph research note for ${ticker}.` }
+        { role: 'user', content: `${summary}\n\nWrite a one paragraph research note for ${ticker} based on this recent price action.` }
       ]
     })
   });
@@ -73,13 +104,12 @@ async function getResearchNote(ticker, priceData, apiKey) {
 }
 
 function renderResults(ticker, priceData, note) {
-  // priceData is the array of daily bars from fetchPriceData.
-  // Grab the most recent bar so you can confirm the data actually loaded.
-  const latest = priceData.reduce((a, b) => (a.date > b.date ? a : b));
+  // priceData is sorted oldest to newest, so the last bar is the most recent.
+  const latest = priceData[priceData.length - 1];
 
   results.innerHTML = `
     <h2>${ticker}</h2>
-    <p class="price">Latest close (${latest.date}): $${Number(latest.close).toFixed(2)}</p>
+    <p class="price">Latest close (${latest.date}): $${latest.close.toFixed(2)}</p>
     <p class="note">${note}</p>
   `;
 }

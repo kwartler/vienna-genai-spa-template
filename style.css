@@ -93,6 +93,17 @@ button:hover {
   font-style: italic;
 }
 
+.field-hint {
+  margin: 0 0 0.5rem;
+  font-size: 0.75rem;
+  font-style: italic;
+  color: #8a8577;
+}
+
+.field-hint a {
+  color: var(--accent);
+}
+
 .error {
   color: var(--error);
 }

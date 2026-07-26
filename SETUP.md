@@ -15,21 +15,14 @@ That is the whole setup. You do **not** need to pick a branch or folder.
 
 > **Note:** this setting does not carry over when you generate a new repo from this template. Every student, in every repo, has to do this once.
 
-## 2. Add your API keys
+## 2. Get your API keys
 
-The app needs two keys before it will return anything.
+The app needs two keys before it will return anything. You do **not** put either key in the code. You type them into the app's form fields when you click Analyze.
 
-1. **Financial Modeling Prep (price data).** Open `main.js` and paste your FMP key into this line near the top:
+1. **Twelve Data (price data).** Get a free key at https://twelvedata.com/pricing. The free plan covers all US stocks and ETFs, capped at 8 requests per minute and 800 per day.
+2. **OpenRouter (the AI research note).** Get a key at https://openrouter.ai/.
 
-   ```js
-   const FMP_API_KEY = 'YOUR_FMP_KEY_HERE';
-   ```
-
-   Get a free key from your FMP dashboard at https://site.financialmodelingprep.com/.
-
-2. **OpenRouter (the AI research note).** You do not put this in the code. Type it into the app's "OpenRouter API key" field when you click Analyze.
-
-> **Heads up:** `main.js` is sent to the browser, so your FMP key is visible to anyone who opens your deployed page. Use only a free classroom key here, never a paid or personal one.
+> **Why this design:** neither key is ever written into a file, committed to your repo, or shipped in the source. They live only in the browser tab of whoever types them and are gone when the page reloads. That means you can safely make this repo public and show the deployed page to anyone, including prospective employers, without exposing a key.
 
 ## 3. Deploy
 
@@ -60,7 +53,8 @@ Vite serves the app at `http://localhost:5173` and reloads on every edit.
 
 ## Troubleshooting
 
-- **"Something went wrong: Invalid API KEY":** your FMP key in `main.js` is missing or still `YOUR_FMP_KEY_HERE`. Redo step 2.
+- **"Something went wrong" mentioning an API key:** the Twelve Data key you typed into the form is wrong or empty. Recheck it against your Twelve Data dashboard (step 2).
+- **"Something went wrong" mentioning credits or run out of requests:** the free Twelve Data plan allows 8 requests per minute and 800 per day. Wait a minute and try again.
 - **Page has no styling / app does nothing when deployed** — Source is probably still "Deploy from a branch." Redo step 1.
 - **Nothing deploys after a push** — check the **Actions** tab for a failed run, and confirm you pushed to the `main` branch.
 - **404 at the Pages URL** — the first deploy may still be running, or Pages is not enabled yet (step 1). Give it a minute, then refresh.
