@@ -1,4 +1,4 @@
-// Vienna GenAI Finance course, starter scaffold.
+// GenAI Finance course, starter scaffold.
 // This file intentionally does very little. Build on it during class.
 //
 // No API keys are stored in this file. Both the Twelve Data key and the

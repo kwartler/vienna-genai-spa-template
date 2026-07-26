@@ -1,4 +1,4 @@
-# vienna-genai-spa-template
+# genai-finance-spa-template
 
 The single page application template for students.
 
