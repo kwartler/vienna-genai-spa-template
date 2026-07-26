@@ -6,12 +6,46 @@ The single page application template for students.
 
 ## Local development
 
-```bash
-npm install
-npm run dev
-```
+Step by step, the first time:
 
-Vite serves the app at `http://localhost:5173`. Edits reload automatically.
+1. Open a terminal. On a Mac, press `Cmd + Space`, type `Terminal`, and press `Enter`.
+
+2. Change into the folder you cloned, the one that contains `package.json`. For example, if it is on your Desktop:
+
+   ```bash
+   cd ~/Desktop/your-repo-name
+   ```
+
+3. Install the dependencies. You only need to do this once:
+
+   ```bash
+   npm install
+   ```
+
+4. Start the local development server:
+
+   ```bash
+   npm run dev
+   ```
+
+5. The terminal prints a local address, usually `http://localhost:5173`. Open that address in your web browser. The page reloads automatically every time you save a file.
+
+To stop the server, click back on the terminal and press `Ctrl + C`.
+
+## API keys
+
+This app calls two services, and needs a key for each before it returns anything:
+
+1. **Financial Modeling Prep (price data):** paste your FMP key into `main.js`, on this line near the top:
+
+   ```js
+   const FMP_API_KEY = 'YOUR_FMP_KEY_HERE';
+   ```
+
+   Get a free key from your FMP dashboard at https://site.financialmodelingprep.com/.
+2. **OpenRouter (the AI research note):** you enter this in the app's form field when you click Analyze. It is not stored in the code.
+
+Note: `main.js` ships to the browser, so your FMP key is visible to anyone who views your deployed page. Use only a free classroom key here, never a paid or personal one.
 
 ## Deploying to GitHub Pages
 
