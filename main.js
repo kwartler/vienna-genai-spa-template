@@ -92,15 +92,50 @@ async function getResearchNote(ticker, priceData, apiKey) {
     },
     body: JSON.stringify({
       model: 'anthropic/claude-sonnet-5',
+      // Sonnet 5 is a reasoning model. If max_tokens is too small to also cover
+      // its reasoning tokens, the request is rejected with a 400 "Provider
+      // returned error". This note is short, so turn reasoning off and leave
+      // comfortable headroom for the reply.
+      max_tokens: 2000,
+      reasoning: { enabled: false },
       messages: [
         { role: 'system', content: 'You are a financial research assistant. Be concise and factual.' },
         { role: 'user', content: `${summary}\n\nWrite a one paragraph research note for ${ticker} based on this recent price action.` }
       ]
     })
   });
-  if (!response.ok) throw new Error('OpenRouter call failed');
+  // Surface what OpenRouter actually said, so a failed call tells you the real
+  // reason (bad key, no credits, rate limit, provider error) instead of a
+  // generic message you cannot act on.
+  if (!response.ok) throw new Error(`OpenRouter call failed. ${await readOpenRouterError(response)}`);
   const data = await response.json();
   return data.choices?.[0]?.message?.content ?? 'No response.';
+}
+
+// Pulls the useful part out of an OpenRouter error response: the HTTP status,
+// a plain-language hint for the common cases, and the message OpenRouter (or
+// the upstream provider) actually returned.
+async function readOpenRouterError(response) {
+  let message = '';
+  try {
+    const body = await response.json();
+    const err = body.error ?? body;
+    message = err.message || '';
+    // On a "Provider returned error", the provider's own message is under
+    // metadata rather than the top-level message field.
+    const provider = err.metadata?.provider_name;
+    const raw = err.metadata?.raw;
+    if (provider) message += ` [provider: ${provider}]`;
+    if (raw) message += ` ${typeof raw === 'string' ? raw : JSON.stringify(raw)}`;
+  } catch {
+    // Response body was not JSON; the status code below still says something.
+  }
+  const hint = {
+    401: 'Your API key looks invalid or missing',
+    402: 'This model is paid and your OpenRouter account is out of credits',
+    429: 'Rate limited, wait a moment and try again'
+  }[response.status];
+  return [`(HTTP ${response.status})`, hint, message].filter(Boolean).join(' ');
 }
 
 function renderResults(ticker, priceData, note) {
