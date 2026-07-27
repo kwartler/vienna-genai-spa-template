@@ -91,7 +91,7 @@ async function getResearchNote(ticker, priceData, apiKey) {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      model: 'anthropic/claude-sonnet-4-6',
+      model: 'anthropic/claude-sonnet-5',
       messages: [
         { role: 'system', content: 'You are a financial research assistant. Be concise and factual.' },
         { role: 'user', content: `${summary}\n\nWrite a one paragraph research note for ${ticker} based on this recent price action.` }
